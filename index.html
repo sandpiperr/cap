@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHS Communal Calendar — Mockup</title>
+  <style>
+/* =====================================================
+   SHS Communal Calendar — Prototype Styles
+   Intentionally simple. This is a mockup.
+   ===================================================== */
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  margin: 0;
+  padding: 16px;
+  color: #222;
+}
+
+/* --- Header --- */
+header {
+  background: #1a3a6b;
+  color: white;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+header h2 {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  font-weight: normal;
+  opacity: 0.85;
+}
+
+.mockup-badge {
+  background: #e8a020;
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border: 1px solid #c07010;
+  letter-spacing: 0.05em;
+  border-radius: 20px;
+}
+
+/* --- Legend --- */
+.legend {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 20px;
+  transition: opacity 0.15s;
+  font-weight: bold;
+}
+
+/* --- Calendar Grid --- */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-left: 1px solid #aaa;
+  border-top: 1px solid #aaa;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.day-header {
+  background: #ddd;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 6px 0;
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+  color: #222;
+}
+
+.day-cell {
+  border-right: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+  min-height: 90px;
+  padding: 5px;
+  vertical-align: top;
+  background: white;
+}
+
+.day-cell.empty {
+  background: #fafafa;
+}
+
+.day-cell.no-school {
+  background: #f0f0f0;
+}
+
+.day-number {
+  font-size: 0.8rem;
+  color: #555;
+  margin-bottom: 3px;
+}
+
+.day-cell.today .day-number {
+  background: #1a3a6b;
+  color: white;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  text-align: center;
+  border-radius: 50%;
+  font-size: 0.75rem;
+}
+
+/* --- Event Pills --- */
+.event-pill {
+  display: block;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  margin-bottom: 3px;
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.event-pill:hover {
+  filter: brightness(0.92);
+}
+
+/* Category colors */
+.sports        { background: #b8d4f0; color: #1a3a6b; }
+.arts          { background: #d4b8f0; color: #3a1a6b; }
+.academic      { background: #f0d4b8; color: #6b3a1a; }
+.schoolwide    { background: #b8f0c8; color: #1a6b3a; }
+
+/* --- Filter legend toggle states --- */
+.legend-item {
+  cursor: pointer;
+  user-select: none;
+  opacity: 1;
+}
+
+.legend-item.off {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
+.event-pill.hidden {
+  display: none;
+}
+
+/* --- Modal --- */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 20px 24px;
+  max-width: 360px;
+  width: 90%;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #555;
+}
+
+.modal-close:hover {
+  color: #000;
+}
+
+#modal-content h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+#modal-content .modal-category {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 10px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+}
+
+#modal-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+#modal-content table td {
+  padding: 3px 0;
+  vertical-align: top;
+}
+
+#modal-content table td:first-child {
+  color: #666;
+  width: 70px;
+  font-size: 0.78rem;
+}
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-top">
+      <h1>Scituate High School</h1>
+      <span class="mockup-badge">PROTOTYPE / MOCKUP</span>
+    </div>
+    <h2>Communal Calendar — April 2026</h2>
+  </header>
+
+  <main>
+    <div class="legend">
+      <span class="legend-item sports">Sports</span>
+      <span class="legend-item arts">Music / Arts</span>
+      <span class="legend-item academic">Academic</span>
+      <span class="legend-item schoolwide">School-Wide</span>
+    </div>
+
+    <div class="calendar-grid" id="calendar"></div>
+  </main>
+
+  <!-- Event detail modal -->
+  <div class="modal-backdrop" id="modal-backdrop" style="display:none">
+    <div class="modal" id="modal">
+      <button class="modal-close" id="modal-close">✕</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <script>
+// =====================================================
+// SHS Communal Calendar — Prototype
+// April 2026
+// =====================================================
+
+// --- Event Data ---
+// source: "district" = from Scituate Public Schools calendar
+// source: "sample"   = made-up placeholder data
+const EVENTS = [
+  {
+    day: 3,
+    title: "No School — Good Friday",
+    category: "schoolwide",
+    time: "All day",
+    location: "—",
+    description: "School closed for Good Friday.",
+    source: "district",
+    noSchool: true,
+  },
+  {
+    day: 7,
+    title: "Varsity Baseball vs. Lincoln",
+    category: "sports",
+    time: "3:30 PM",
+    location: "Home Field",
+    description: "Home game. Come out and support the Sailors!",
+    source: "sample",
+  },
+  {
+    day: 9,
+    title: "Spring Band Concert",
+    category: "arts",
+    time: "7:00 PM",
+    location: "Auditorium",
+    description: "SHS Concert Band and Wind Ensemble spring performance. Open to the public.",
+    source: "sample",
+  },
+  {
+    day: 10,
+    title: "Girls Track Invitational",
+    category: "sports",
+    time: "10:00 AM",
+    location: "Away – Riverside",
+    description: "Away invitational meet. Check with your coach for bus times.",
+    source: "sample",
+  },
+  {
+    day: 14,
+    title: "SAT School Day",
+    category: "academic",
+    time: "8:00 AM",
+    location: "Main Gym",
+    description: "All juniors take the SAT during the school day. Regular schedule for other grades.",
+    source: "sample",
+  },
+  {
+    day: 15,
+    title: "Varsity Softball vs. Westfield",
+    category: "sports",
+    time: "4:00 PM",
+    location: "Home Field",
+    description: "Home game.",
+    source: "sample",
+  },
+  {
+    day: 17,
+    title: "Spring Drama: Opening Night",
+    category: "arts",
+    time: "7:00 PM",
+    location: "Auditorium",
+    description: "SHS Drama Department spring production. Tickets at the door.",
+    source: "sample",
+  },
+  {
+    day: 18,
+    title: "Spring Drama: Closing Night",
+    category: "arts",
+    time: "7:00 PM",
+    location: "Auditorium",
+    description: "Final performance of the SHS Drama Department spring production.",
+    source: "sample",
+  },
+  {
+    day: 20,
+    title: "No School — Patriots' Day",
+    category: "schoolwide",
+    time: "All day",
+    location: "—",
+    description: "Massachusetts state holiday. School closed.",
+    source: "district",
+    noSchool: true,
+  },
+  {
+    day: 21,
+    title: "No School — April Break",
+    category: "schoolwide",
+    time: "All day",
+    location: "—",
+    description: "April Break. School resumes Monday, April 27.",
+    source: "district",
+    noSchool: true,
+  },
+  {
+    day: 22,
+    title: "No School — April Break",
+    category: "schoolwide",
+    time: "All day",
+    location: "—",
+    description: "April Break.",
+    source: "district",
+    noSchool: true,
+  },
+  {
+    day: 23,
+    title: "No School — April Break",
+    category: "schoolwide",
+    time: "All day",
+    location: "—",
+    description: "April Break.",
+    source: "district",
+    noSchool: true,
+  },
+  {
+    day: 24,
+    title: "No School — April Break",
+    category: "schoolwide",
+    time: "All day",
+    location: "—",
+    description: "April Break.",
+    source: "district",
+    noSchool: true,
+  },
+  {
+    day: 28,
+    title: "Senior Class Meeting",
+    category: "schoolwide",
+    time: "10:00 AM",
+    location: "Auditorium",
+    description: "Mandatory meeting for all seniors. Details TBD.",
+    source: "sample",
+  },
+  {
+    day: 29,
+    title: "AP English Literature Exam",
+    category: "academic",
+    time: "8:00 AM",
+    location: "Main Gym",
+    description: "College Board AP English Literature and Composition exam.",
+    source: "sample",
+  },
+  {
+    day: 30,
+    title: "Boys Lacrosse vs. Northside",
+    category: "sports",
+    time: "4:30 PM",
+    location: "Home Field",
+    description: "Home game.",
+    source: "sample",
+  },
+  {
+    day: 30,
+    title: "Jazz Ensemble Showcase",
+    category: "arts",
+    time: "6:30 PM",
+    location: "Cafeteria",
+    description: "SHS Jazz Ensemble spring showcase. Informal, all welcome.",
+    source: "sample",
+  },
+];
+
+// Wednesdays have a late start (9:15 AM) at SHS
+const LATE_START_DAYS = [1, 8, 15, 22, 29]; // April 2026 Wednesdays
+
+// April 1, 2026 falls on a Wednesday (index 3 in Sun–Sat week)
+const APRIL_START_DOW = 3;
+const APRIL_DAYS = 30;
+const TODAY = 6; // April 6 is today (2026-04-06)
+
+const CATEGORY_LABELS = {
+  sports: "Sports",
+  arts: "Music / Arts",
+  academic: "Academic",
+  schoolwide: "School-Wide",
+};
+
+// --- Render Calendar ---
+function renderCalendar() {
+  const container = document.getElementById("calendar");
+
+  // Day headers
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  dayNames.forEach(name => {
+    const header = document.createElement("div");
+    header.className = "day-header";
+    header.textContent = name;
+    container.appendChild(header);
+  });
+
+  // Empty cells before April 1
+  for (let i = 0; i < APRIL_START_DOW; i++) {
+    const empty = document.createElement("div");
+    empty.className = "day-cell empty";
+    container.appendChild(empty);
+  }
+
+  // Day cells
+  for (let day = 1; day <= APRIL_DAYS; day++) {
+    const cell = document.createElement("div");
+    const dayOfWeek = (APRIL_START_DOW + day - 1) % 7;
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const dayEvents = EVENTS.filter(e => e.day === day);
+    const isNoSchool = dayEvents.some(e => e.noSchool) || isWeekend;
+
+    cell.className = "day-cell" +
+      (isNoSchool ? " no-school" : "") +
+      (day === TODAY ? " today" : "");
+
+    // Day number
+    const num = document.createElement("div");
+    num.className = "day-number";
+    num.textContent = day;
+
+    // Late start indicator
+    if (LATE_START_DAYS.includes(day)) {
+      const ls = document.createElement("span");
+      ls.title = "Late Start — 9:15 AM";
+      ls.style.cssText = "font-size:0.6rem;color:#888;margin-left:3px;";
+      ls.textContent = "late start";
+      num.appendChild(ls);
+    }
+
+    cell.appendChild(num);
+
+    // Event pills
+    dayEvents.forEach(event => {
+      const pill = document.createElement("div");
+      pill.className = "event-pill " + event.category;
+      pill.textContent = event.title;
+      pill.addEventListener("click", () => openModal(event));
+      cell.appendChild(pill);
+    });
+
+    container.appendChild(cell);
+  }
+
+  // Fill remaining cells to complete the last row
+  const totalCells = APRIL_START_DOW + APRIL_DAYS;
+  const remainder = totalCells % 7;
+  if (remainder !== 0) {
+    for (let i = 0; i < 7 - remainder; i++) {
+      const empty = document.createElement("div");
+      empty.className = "day-cell empty";
+      container.appendChild(empty);
+    }
+  }
+}
+
+// --- Modal ---
+function openModal(event) {
+  const backdrop = document.getElementById("modal-backdrop");
+  const content = document.getElementById("modal-content");
+
+  const dateStr = `April ${event.day}, 2026`;
+
+  content.innerHTML = `
+    <h3>${event.title}</h3>
+    <span class="modal-category ${event.category}">${CATEGORY_LABELS[event.category]}</span>
+    <table>
+      <tr><td>Date</td><td>${dateStr}</td></tr>
+      <tr><td>Time</td><td>${event.time}</td></tr>
+      <tr><td>Location</td><td>${event.location}</td></tr>
+      <tr><td>Notes</td><td>${event.description}</td></tr>
+      <tr><td>Data</td><td style="color:#aaa;font-size:0.72rem">${event.source === "district" ? "Official district calendar" : "Sample data (placeholder)"}</td></tr>
+    </table>
+  `;
+
+  backdrop.style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("modal-backdrop").style.display = "none";
+}
+
+document.getElementById("modal-close").addEventListener("click", closeModal);
+document.getElementById("modal-backdrop").addEventListener("click", function(e) {
+  if (e.target === this) closeModal();
+});
+
+// --- Category Filters ---
+// Click a category to spotlight it (show only that type).
+// Click it again to reset and show everything.
+let activeFilter = null;
+
+document.querySelectorAll(".legend-item").forEach(item => {
+  const category = item.classList[1]; // second class is the category name
+  item.addEventListener("click", () => {
+    if (activeFilter === category) {
+      // Already spotlighted — reset to show all
+      activeFilter = null;
+    } else {
+      activeFilter = category;
+    }
+
+    // Update legend item styles
+    document.querySelectorAll(".legend-item").forEach(el => {
+      const elCategory = el.classList[1];
+      el.classList.toggle("off", activeFilter !== null && elCategory !== activeFilter);
+    });
+
+    // Show/hide pills
+    document.querySelectorAll(".event-pill").forEach(pill => {
+      const pillCategory = [...pill.classList].find(c => c !== "event-pill");
+      pill.classList.toggle("hidden", activeFilter !== null && pillCategory !== activeFilter);
+    });
+  });
+});
+
+// --- Init ---
+renderCalendar();
+  </script>
+</body>
+</html>
