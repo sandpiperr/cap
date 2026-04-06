@@ -18,6 +18,12 @@ body {
   color: #222;
 }
 
+@media (max-width: 600px) {
+  body {
+    padding: 8px;
+  }
+}
+
 /* --- Header --- */
 header {
   background: #1a3a6b;
@@ -31,6 +37,7 @@ header {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 header h1 {
@@ -43,6 +50,11 @@ header h2 {
   font-size: 1rem;
   font-weight: normal;
   opacity: 0.85;
+}
+
+@media (max-width: 600px) {
+  header h1 { font-size: 1.1rem; }
+  header h2 { font-size: 0.85rem; }
 }
 
 .mockup-badge {
@@ -171,6 +183,126 @@ header h2 {
   display: none;
 }
 
+/* --- Responsive: hide grid, show agenda on mobile --- */
+@media (max-width: 600px) {
+  .calendar-grid { display: none; }
+  .agenda-view   { display: block; }
+}
+@media (min-width: 601px) {
+  .agenda-view { display: none; }
+}
+
+/* --- Agenda View (mobile) --- */
+.agenda-view {
+  background: white;
+  border: 1px solid #aaa;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.agenda-day {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.agenda-day:last-child {
+  border-bottom: none;
+}
+
+.agenda-day-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px 4px;
+  background: #f5f5f5;
+}
+
+.agenda-day-header.today-header {
+  background: #e8eef7;
+}
+
+.agenda-day-num {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #1a3a6b;
+  min-width: 24px;
+}
+
+.agenda-day-num.today-num {
+  background: #1a3a6b;
+  color: white;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+  font-size: 0.8rem;
+}
+
+.agenda-day-name {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.agenda-day-meta {
+  font-size: 0.65rem;
+  color: #999;
+  margin-left: auto;
+}
+
+.agenda-events {
+  padding: 4px 12px 8px;
+}
+
+.agenda-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+
+.agenda-event:last-child {
+  border-bottom: none;
+}
+
+.agenda-event-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.agenda-event-info {
+  flex: 1;
+}
+
+.agenda-event-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #222;
+}
+
+.agenda-event-time {
+  font-size: 0.72rem;
+  color: #777;
+}
+
+.agenda-empty {
+  font-size: 0.75rem;
+  color: #bbb;
+  padding: 4px 0 6px;
+  font-style: italic;
+}
+
+.agenda-no-school {
+  font-size: 0.72rem;
+  color: #888;
+  padding: 4px 12px 8px;
+  font-style: italic;
+}
+
 /* --- Modal --- */
 .modal-backdrop {
   position: fixed;
@@ -259,6 +391,7 @@ header h2 {
     </div>
 
     <div class="calendar-grid" id="calendar"></div>
+    <div class="agenda-view" id="agenda"></div>
   </main>
 
   <!-- Event detail modal -->
@@ -579,16 +712,136 @@ document.querySelectorAll(".legend-item").forEach(item => {
       el.classList.toggle("off", activeFilter !== null && elCategory !== activeFilter);
     });
 
-    // Show/hide pills
+    // Show/hide pills (grid)
     document.querySelectorAll(".event-pill").forEach(pill => {
       const pillCategory = [...pill.classList].find(c => c !== "event-pill");
       pill.classList.toggle("hidden", activeFilter !== null && pillCategory !== activeFilter);
     });
+
+    // Show/hide agenda rows (mobile)
+    applyAgendaFilter(activeFilter);
   });
 });
 
+// --- Agenda View (mobile) ---
+function renderAgenda() {
+  const container = document.getElementById("agenda");
+  const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const DOT_COLORS = {
+    sports:     "#6aaee0",
+    arts:       "#b09ad4",
+    academic:   "#e0a870",
+    schoolwide: "#70c490",
+  };
+
+  for (let day = 1; day <= APRIL_DAYS; day++) {
+    const dow = (APRIL_START_DOW + day - 1) % 7;
+    const isWeekend = dow === 0 || dow === 6;
+    const dayEvents = EVENTS.filter(e => e.day === day);
+    const noSchoolEvent = dayEvents.find(e => e.noSchool);
+    const isToday = day === TODAY;
+    const isLateStart = LATE_START_DAYS.includes(day);
+
+    // Skip empty weekend days (no events)
+    if (isWeekend && dayEvents.length === 0) continue;
+
+    const section = document.createElement("div");
+    section.className = "agenda-day";
+
+    // Day header
+    const header = document.createElement("div");
+    header.className = "agenda-day-header" + (isToday ? " today-header" : "");
+
+    const numEl = document.createElement("span");
+    numEl.className = "agenda-day-num" + (isToday ? " today-num" : "");
+    numEl.textContent = day;
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "agenda-day-name";
+    nameEl.textContent = DAY_NAMES[dow];
+
+    header.appendChild(numEl);
+    header.appendChild(nameEl);
+
+    if (isLateStart) {
+      const meta = document.createElement("span");
+      meta.className = "agenda-day-meta";
+      meta.textContent = "late start 9:15";
+      header.appendChild(meta);
+    }
+
+    section.appendChild(header);
+
+    if (noSchoolEvent) {
+      const ns = document.createElement("div");
+      ns.className = "agenda-no-school";
+      ns.textContent = noSchoolEvent.title;
+      section.appendChild(ns);
+    } else {
+      const eventsEl = document.createElement("div");
+      eventsEl.className = "agenda-events";
+
+      const nonSchoolEvents = dayEvents.filter(e => !e.noSchool);
+      if (nonSchoolEvents.length === 0 && !isWeekend) {
+        const empty = document.createElement("div");
+        empty.className = "agenda-empty";
+        empty.textContent = "No events";
+        eventsEl.appendChild(empty);
+      }
+
+      nonSchoolEvents.forEach(event => {
+        const row = document.createElement("div");
+        row.className = "agenda-event";
+        row.addEventListener("click", () => openModal(event));
+
+        const dot = document.createElement("div");
+        dot.className = "agenda-event-dot";
+        dot.style.background = DOT_COLORS[event.category] || "#ccc";
+
+        const info = document.createElement("div");
+        info.className = "agenda-event-info";
+
+        const title = document.createElement("div");
+        title.className = "agenda-event-title";
+        title.textContent = event.title;
+
+        const time = document.createElement("div");
+        time.className = "agenda-event-time";
+        time.textContent = event.time + (event.location !== "—" ? " · " + event.location : "");
+
+        info.appendChild(title);
+        info.appendChild(time);
+        row.appendChild(dot);
+        row.appendChild(info);
+        eventsEl.appendChild(row);
+      });
+
+      section.appendChild(eventsEl);
+    }
+
+    container.appendChild(section);
+  }
+}
+
+// --- Category filter: also apply to agenda view ---
+function applyAgendaFilter(activeFilter) {
+  const DOT_COLORS = {
+    sports:     "#6aaee0",
+    arts:       "#b09ad4",
+    academic:   "#e0a870",
+    schoolwide: "#70c490",
+  };
+  document.querySelectorAll(".agenda-event").forEach(row => {
+    // Match by dot color — find the event via click handler category
+    const dot = row.querySelector(".agenda-event-dot");
+    const category = Object.entries(DOT_COLORS).find(([, c]) => dot.style.background === c)?.[0];
+    row.style.display = (activeFilter && category !== activeFilter) ? "none" : "";
+  });
+}
+
 // --- Init ---
 renderCalendar();
+renderAgenda();
   </script>
 </body>
 </html>
